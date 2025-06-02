@@ -17,8 +17,8 @@ class Company(Base):
     name = Column(String())
     founding_year = Column(Integer())
 
-    freebies = relationship("Freebie", backref="company")
-    devs = relationship("Dev", secondary="freebies", backref="companies")
+  
+    freebies = relationship("Freebie", back_populates="company")
 
     def __repr__(self):
         return f"<Company {self.name}>"
@@ -32,6 +32,11 @@ class Company(Base):
             item_name=item_name, value=value, dev_id=dev.id, company_id=self.id
         )
 
+  
+    @property
+    def devs(self):
+        return [freebie.dev for freebie in self.freebies]
+
 
 class Dev(Base):
     __tablename__ = "devs"
@@ -39,8 +44,7 @@ class Dev(Base):
     id = Column(Integer(), primary_key=True)
     name = Column(String())
 
-    freebies = relationship("Freebie", backref="dev")
-    companies = relationship("Company", secondary="freebies", backref="devs")
+    freebies = relationship("Freebie", back_populates="dev")
 
     def __repr__(self):
         return f"<Dev {self.name}>"
@@ -54,6 +58,10 @@ class Dev(Base):
             return True
         return False
 
+    @property
+    def companies(self):
+        return [freebie.company for freebie in self.freebies]
+
 
 class Freebie(Base):
     __tablename__ = "freebies"
@@ -63,6 +71,10 @@ class Freebie(Base):
     value = Column(Integer())
     dev_id = Column(Integer(), ForeignKey("devs.id"))
     company_id = Column(Integer(), ForeignKey("companies.id"))
+
+ 
+    dev = relationship("Dev", back_populates="freebies")
+    company = relationship("Company", back_populates="freebies")
 
     def print_details(self):
         return f"{self.dev.name} owns a {self.item_name} from {self.company.name}"
